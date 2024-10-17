@@ -1,0 +1,157 @@
+@page "/entidad/{tipo}/editar"
+@page "/entidad/{tipo}/editar/{id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager NavMan
+@inject IJSRuntime JSx
+@inject SerieContext Sc 
+
+<PageTitle>Editar Entidad</PageTitle>
+
+<h3>Entidad @Tipo</h3>
+
+<EditForm Model="instancia" OnValidSubmit="GuardarDatos">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+    <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <InputText id="nombre" class="form-control" @bind-Value="instancia.Nombre"/>
+    </div>
+
+    <div class="form-group">
+        <label for="pais">País</label>
+        <InputText id="pais" class="form-control" @bind-Value="instancia.Pais"/>
+    </div>
+
+    <div class="form-group">
+        <label for="idioma">Idioma</label>
+        <InputText id="idioma" class="form-control" @bind-Value="instancia.Idioma"/>
+    </div>
+
+    <div class="form-group">
+        <label for="fotourl">FotoUrl</label>
+        <InputText id="fotourl" type="url" class="form-control" @bind-Value="instancia.FotoUrl"/>
+    </div>
+    
+    <div class="form-group">
+        <label for="resumen">Resumen</label>
+        <InputText id="resumen" class="form-control" @bind-Value="instancia.Resumen"/>
+    </div>
+
+    <br>
+
+    <h4>Personajes</h4>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <td></td>
+            <th>Nombre</th>
+            <th>Apodo</th>
+            <th>Raza</th>
+            <th>Foto</th>
+            <th>Edad</th>
+            <td>
+                <button type="button" class="btn btn-primary" @onclick="agregarPersonaje">Agregar</button>
+            </td>
+            
+        </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in instancia.Personajes)
+            {
+                <tr>
+                    <td>
+                        <img style="height:70px;" src="@item.FotoUrl" alt="@item.Nombre" />
+                    </td>
+                    <td><InputText @bind-Value="item.Nombre" class="form-control" /></td>
+                    <td><InputText @bind-Value="item.Apodo" class="form-control" /></td>
+                    <td><InputText @bind-Value="item.Raza" class="form-control" /></td>
+                    <td><InputText @bind-Value="item.FotoUrl" class="form-control" /></td>
+                    <td><InputNumber @bind-Value="item.Edad" class="form-control" /></td>    
+                </tr>
+            }
+        </tbody>
+    </table>
+    <td>
+        <button type="submit" class="btn btn-warning">Agregar</button>
+    </td>
+    <td>
+        <button type="submit" class="btn btn-success">Activar</button>
+    </td>
+    <td>
+        <button type="submit" class="btn btn-danger">Desactivar</button>
+    </td>
+    <td>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </td>
+     
+</EditForm>
+
+@code {
+    [Parameter]
+    public string Tipo { get; set; } = "";
+
+    [Parameter]
+    public int Id { get; set; } = 0;
+
+    void agregarPersonaje()
+    {
+        instancia.Personajes.Add(new Personaje());
+        StateHasChanged();
+    }
+
+    SeriePeliculaLibro instancia = new SeriePeliculaLibro();
+
+    TipoEntidad tipoEntidad;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        switch (Tipo.ToLower())
+        {
+            case "libros":
+                tipoEntidad = TipoEntidad.Libro;
+                break;
+            
+            case "peliculas":
+                tipoEntidad = TipoEntidad.Pelicula;
+                break;
+
+            case "series":
+                tipoEntidad = TipoEntidad.Serie;
+                break;
+
+            default:
+                NavMan.NavigateTo("/");
+                break;    
+        }
+    }
+
+      async Task GuardarDatos()
+    {
+        instancia.Tipo = tipoEntidad;
+        if (instancia.Id > 0)
+        {
+            Sc.SeriePeliculaLibros.Update(instancia);
+        }else{
+             Sc.SeriePeliculaLibros.Add(instancia);
+        }
+        await Sc.SaveChangesAsync();
+        await JSx.InvokeVoidAsync("alert", "Datos Guardados");
+        NavMan.NavigateTo($"/entidad/{Tipo}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Id > 0)
+            {
+                instancia = Sc.SeriePeliculaLibros.FirstOrDefault(x => x.Id == Id)?? new SeriePeliculaLibro();
+                StateHasChanged();
+            }
+        }
+    }
+
+}

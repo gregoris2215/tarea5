@@ -1,0 +1,93 @@
+@page "/entidad/{tipo}"
+@inject NavigationManager NavMan
+@rendermode InteractiveServer
+@inject SerieContext Sc
+
+<h3>Entidad @Tipo</h3>
+
+<div class="text-end">
+    <button type="button" @onclick="agregarNuevo" class="btn btn-primary">Agregar</button>
+</div>
+
+<p>Agregados</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Desarrollador</th>
+            <th>Plataforma</th>
+            <th>Genero</th>
+            <th>Descripcion</th>
+            <th>Foto</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in lista)
+        { <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Pais</td>
+                <td>@item.Idioma</td>
+                <td>@item.Personajes.Count</td>
+                <td>@item.Resumen</td>
+                <td><img src="@item.FotoUrl" alt="@item.Nombre" width="100" /></td>
+                <td>
+                    <button class="btn btn-success" @onclick="()=>editar(item.Id)">Editar</button>
+                </td>
+                 <td>
+                    <button class="btn btn-danger" @onclick="()=>editar(item.Id)">Eliminar</button>
+                </td>
+         </tr>
+        }
+    </tbody>
+</table>
+
+@code{
+
+    [Parameter]
+    public string Tipo {get; set;} = "";
+
+    TipoEntidad tipoEntidad = TipoEntidad.Libro;
+
+     protected override async Task OnParametersSetAsync()
+    {
+        switch (Tipo)
+        {
+            case "libros":
+                tipoEntidad = TipoEntidad.Libro;
+                break;
+            
+            case "peliculas":
+                tipoEntidad = TipoEntidad.Pelicula;
+                break;
+
+            case "series":
+                tipoEntidad = TipoEntidad.Serie;
+                break;
+        }
+    }
+
+    List<SeriePeliculaLibro> lista = new List<SeriePeliculaLibro>();
+
+    private void agregarNuevo()
+    {
+        NavMan.NavigateTo($"entidad/{Tipo}/editar");
+    }
+
+    private void editar(int id)
+    {
+        NavMan.NavigateTo($"entidad/{Tipo}/editar/{id}");
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            lista = Sc.SeriePeliculaLibros.Where(x => x.Tipo == tipoEntidad).ToList();
+            StateHasChanged();
+        }
+    }
+
+
+}
